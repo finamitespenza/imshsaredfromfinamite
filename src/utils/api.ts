@@ -4,198 +4,132 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import Swal from 'sweetalert2';
 
-const API_BASE = '/api';
+const API_BASE = 'http://localhost:5000/api';
 
 // --- SKU APIs ---
 export async function getSKUs() {
-  const res = await fetch(`${API_BASE}/skus`);
-  if (!res.ok) throw new Error('Failed to fetch SKUs');
-  return res.json();
+  try {
+    const response = await axios.get(`${API_BASE}/skus`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching SKUs:', error);
+    throw error;
+  }
 }
 
 export async function addSKU(skuData: any) {
-  const res = await fetch(`${API_BASE}/skus`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(skuData),
-  });
-  if (!res.ok) throw new Error('Failed to add SKU');
-  return res.json();
+  try {
+    const response = await axios.post(`${API_BASE}/skus`, skuData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding SKU:', error);
+    throw error;
+  }
 }
 
 export async function updateSKU(id: string, skuData: any) {
-  const res = await fetch(`${API_BASE}/skus/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(skuData),
-  });
-  if (!res.ok) throw new Error('Failed to update SKU');
-  return res.json();
-}
-
-export async function deleteSKU(id: string) {
-  const res = await fetch(`${API_BASE}/skus/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete SKU');
-  return res.json();
+  try {
+    const response = await axios.put(`${API_BASE}/skus/${id}`, skuData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating SKU:', error);
+    throw error;
+  }
 }
 
 // --- Supplier APIs ---
 export async function getSuppliers() {
-  const res = await fetch(`${API_BASE}/suppliers`);
-  if (!res.ok) throw new Error('Failed to fetch suppliers');
-  return res.json();
+  try {
+    const response = await axios.get(`${API_BASE}/suppliers`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+    throw error;
+  }
 }
 
 export async function addSupplier(supplierData: any) {
-  const res = await fetch(`${API_BASE}/suppliers`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(supplierData),
-  });
-  if (!res.ok) throw new Error('Failed to add supplier');
-  return res.json();
+  try {
+    const response = await axios.post(`${API_BASE}/suppliers`, supplierData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding supplier:', error);
+    throw error;
+  }
 }
 
 export async function updateSupplier(id: string, supplierData: any) {
-  const res = await fetch(`${API_BASE}/suppliers/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(supplierData),
-  });
-  if (!res.ok) throw new Error('Failed to update supplier');
-  return res.json();
-}
-
-export async function deleteSupplier(id: string) {
-  const res = await fetch(`${API_BASE}/suppliers/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete supplier');
-  return res.json();
+  try {
+    const response = await axios.put(`${API_BASE}/suppliers/${id}`, supplierData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating supplier:', error);
+    throw error;
+  }
 }
 
 // --- Warehouse APIs ---
 export async function getWarehouses() {
-  const res = await fetch(`${API_BASE}/warehouses`);
-  if (!res.ok) throw new Error('Failed to fetch warehouses');
-  return res.json();
+  try {
+    const response = await axios.get(`${API_BASE}/warehouses`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching warehouses:', error);
+    throw error;
+  }
 }
 
 export async function addWarehouse(warehouseData: any) {
-  const res = await fetch(`${API_BASE}/warehouses`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(warehouseData),
-  });
-  if (!res.ok) throw new Error('Failed to add warehouse');
-  return res.json();
+  try {
+    const response = await axios.post(`${API_BASE}/warehouses`, warehouseData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding warehouse:', error);
+    throw error;
+  }
 }
 
 export async function updateWarehouse(id: string, warehouseData: any) {
-  const res = await fetch(`${API_BASE}/warehouses/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(warehouseData),
-  });
-  if (!res.ok) throw new Error('Failed to update warehouse');
-  return res.json();
-}
-
-export async function deleteWarehouse(id: string) {
-  const res = await fetch(`${API_BASE}/warehouses/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete warehouse');
-  return res.json();
+  try {
+    const response = await axios.put(`${API_BASE}/warehouses/${id}`, warehouseData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating warehouse:', error);
+    throw error;
+  }
 }
 
 // --- Transaction APIs ---
 export async function getTransactions() {
-  const res = await fetch(`${API_BASE}/transactions`);
-  if (!res.ok) throw new Error('Failed to fetch transactions');
-  return res.json();
+  try {
+    const response = await axios.get(`${API_BASE}/transactions`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    throw error;
+  }
 }
 
 export async function addTransaction(transactionData: any) {
-  const res = await fetch(`${API_BASE}/transactions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(transactionData),
-  });
-  if (!res.ok) throw new Error('Failed to add transaction');
-  return res.json();
-}
-
-export async function updateTransaction(id: string, transactionData: any) {
-  const res = await fetch(`${API_BASE}/transactions/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(transactionData),
-  });
-  if (!res.ok) throw new Error('Failed to update transaction');
-  return res.json();
-}
-
-export async function deleteTransaction(id: string) {
-  const res = await fetch(`${API_BASE}/transactions/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete transaction');
-  return res.json();
+  try {
+    const response = await axios.post(`${API_BASE}/transactions`, transactionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding transaction:', error);
+    throw error;
+  }
 }
 
 // Dashboard Operations
 export const getDashboardData = async (startDate: string, endDate: string) => {
   try {
-    const [
-      totalSKUs,
-      totalTransactions,
-      totalVendors,
-      totalWarehouses,
-      transactions,
-      skus
-    ] = await Promise.all([
-      SKU.countDocuments(),
-      Transaction.countDocuments(),
-      Supplier.countDocuments(),
-      Warehouse.countDocuments(),
-      Transaction.find({
-        timestamp: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
-        }
-      }),
-      SKU.find()
-    ]);
-
-    // Calculate inventory valuation
-    const inventoryValuation = skus.reduce((total, sku) => {
-      return total + (sku.currentStock * sku.price);
-    }, 0);
-
-    // Get low stock and over stock items
-    const lowStock = skus
-      .filter(sku => sku.currentStock < sku.minLvl)
-      .map(sku => [sku.itemName, sku.sku, sku.minLvl, sku.currentStock]);
-
-    const overStock = skus
-      .filter(sku => sku.currentStock > sku.maxLvl)
-      .map(sku => [sku.itemName, sku.sku, sku.maxLvl, sku.currentStock]);
-
-    return {
-      totalSKUs,
-      totalTransactions,
-      totalVendors,
-      totalWarehouses,
-      inventoryValuation: inventoryValuation.toFixed(2),
-      lowStock,
-      overStock,
-      // Add other dashboard calculations as needed
-    };
+    const response = await axios.get(`${API_BASE}/dashboard`, {
+      params: { startDate, endDate }
+    });
+    return response.data;
   } catch (error) {
-    return handleError(error);
+    console.error('Error fetching dashboard data:', error);
+    throw error;
   }
 };
 
@@ -240,7 +174,7 @@ export const exportTable = (tableId: string, format: string, data: any[]) => {
     Swal.fire({
       icon: 'error',
       title: 'Export Failed',
-      text: `Failed to export data: ${error.message || error}`,
+      text: `Failed to export data: ${error.message}`,
     });
   }
 };
