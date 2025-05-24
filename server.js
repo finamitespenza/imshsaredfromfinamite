@@ -16,10 +16,26 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
+// MongoDB Connection with proper error handling
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
+
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+process.on('SIGINT', async () => {
+  await mongoose.connection.close();
+  process.exit(0);
+});
 
 // SKU Routes
 app.get('/api/skus', async (req, res) => {
@@ -44,9 +60,24 @@ app.post('/api/skus', async (req, res) => {
 app.put('/api/skus/:id', async (req, res) => {
   try {
     const updatedSku = await SKU.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedSku) {
+      return res.status(404).json({ message: 'SKU not found' });
+    }
     res.json(updatedSku);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete('/api/skus/:id', async (req, res) => {
+  try {
+    const deletedSku = await SKU.findByIdAndDelete(req.params.id);
+    if (!deletedSku) {
+      return res.status(404).json({ message: 'SKU not found' });
+    }
+    res.json({ message: 'SKU deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -73,9 +104,24 @@ app.post('/api/suppliers', async (req, res) => {
 app.put('/api/suppliers/:id', async (req, res) => {
   try {
     const updatedSupplier = await Supplier.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedSupplier) {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
     res.json(updatedSupplier);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete('/api/suppliers/:id', async (req, res) => {
+  try {
+    const deletedSupplier = await Supplier.findByIdAndDelete(req.params.id);
+    if (!deletedSupplier) {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
+    res.json({ message: 'Supplier deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -102,9 +148,24 @@ app.post('/api/warehouses', async (req, res) => {
 app.put('/api/warehouses/:id', async (req, res) => {
   try {
     const updatedWarehouse = await Warehouse.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedWarehouse) {
+      return res.status(404).json({ message: 'Warehouse not found' });
+    }
     res.json(updatedWarehouse);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete('/api/warehouses/:id', async (req, res) => {
+  try {
+    const deletedWarehouse = await Warehouse.findByIdAndDelete(req.params.id);
+    if (!deletedWarehouse) {
+      return res.status(404).json({ message: 'Warehouse not found' });
+    }
+    res.json({ message: 'Warehouse deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -119,24 +180,37 @@ app.get('/api/transactions', async (req, res) => {
 });
 
 app.post('/api/transactions', async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const transaction = new Transaction(req.body);
-    const newTransaction = await transaction.save();
+    await transaction.save({ session });
     
     // Update SKU stock
-    const sku = await SKU.findOne({ sku: transaction.sku });
-    if (sku) {
-      if (transaction.type === 'Adjusted In' || transaction.type === 'Purchase') {
-        sku.currentStock += transaction.quantity;
-      } else if (transaction.type === 'Adjusted Out' || transaction.type === 'Sale') {
-        sku.currentStock -= transaction.quantity;
+    const sku = await SKU.findOne({ sku: transaction.sku }).session(session);
+    if (!sku) {
+      throw new Error('SKU not found');
+    }
+
+    if (transaction.type === 'Adjusted In' || transaction.type === 'Purchase') {
+      sku.currentStock += transaction.quantity;
+    } else if (transaction.type === 'Adjusted Out' || transaction.type === 'Sale') {
+      if (sku.currentStock < transaction.quantity) {
+        throw new Error('Insufficient stock');
       }
-      await sku.save();
+      sku.currentStock -= transaction.quantity;
     }
     
-    res.status(201).json(newTransaction);
+    await sku.save({ session });
+    await session.commitTransaction();
+    
+    res.status(201).json(transaction);
   } catch (error) {
+    await session.abortTransaction();
     res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
@@ -156,6 +230,42 @@ app.get('/api/dashboard', async (req, res) => {
     const lowStock = skus.filter(sku => sku.currentStock < sku.minLvl);
     const overStock = skus.filter(sku => sku.currentStock > sku.maxLvl);
 
+    // Get transaction statistics
+    const transactionsByType = await Transaction.aggregate([
+      { $group: { _id: '$type', count: { $sum: 1 } } }
+    ]);
+
+    // Get inventory by warehouse
+    const inventoryByWarehouse = await SKU.aggregate([
+      { $group: { _id: '$warehouse', totalStock: { $sum: '$currentStock' } } }
+    ]);
+
+    // Get inventory growth over time
+    const today = new Date();
+    const sixMonthsAgo = new Date(today.setMonth(today.getMonth() - 6));
+    
+    const inventoryGrowth = await Transaction.aggregate([
+      { $match: { timestamp: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$timestamp' },
+            month: { $month: '$timestamp' }
+          },
+          netChange: {
+            $sum: {
+              $cond: [
+                { $in: ['$type', ['Adjusted In', 'Purchase']] },
+                '$quantity',
+                { $multiply: ['$quantity', -1] }
+              ]
+            }
+          }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
     res.json({
       totalSKUs,
       totalTransactions,
@@ -163,13 +273,23 @@ app.get('/api/dashboard', async (req, res) => {
       totalWarehouses,
       inventoryValuation,
       lowStock,
-      overStock
+      overStock,
+      transactionsByType,
+      inventoryByWarehouse,
+      inventoryGrowth
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
+
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

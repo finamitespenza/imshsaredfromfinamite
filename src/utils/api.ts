@@ -6,34 +6,53 @@ import Swal from 'sweetalert2';
 
 const API_BASE = 'http://localhost:5000/api';
 
+// Generic error handler
+const handleError = (error: any) => {
+  console.error('API Error:', error);
+  const message = error.response?.data?.message || error.message || 'An error occurred';
+  Swal.fire({
+    icon: 'error',
+    title: 'Error',
+    text: message,
+  });
+  throw error;
+};
+
 // --- SKU APIs ---
 export async function getSKUs() {
   try {
     const response = await axios.get(`${API_BASE}/skus`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching SKUs:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function addSKU(skuData: any) {
   try {
     const response = await axios.post(`${API_BASE}/skus`, skuData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'SKU added successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error adding SKU:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function updateSKU(id: string, skuData: any) {
   try {
     const response = await axios.put(`${API_BASE}/skus/${id}`, skuData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'SKU updated successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error updating SKU:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
@@ -43,28 +62,35 @@ export async function getSuppliers() {
     const response = await axios.get(`${API_BASE}/suppliers`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching suppliers:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function addSupplier(supplierData: any) {
   try {
     const response = await axios.post(`${API_BASE}/suppliers`, supplierData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Supplier added successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error adding supplier:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function updateSupplier(id: string, supplierData: any) {
   try {
     const response = await axios.put(`${API_BASE}/suppliers/${id}`, supplierData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Supplier updated successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error updating supplier:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
@@ -74,28 +100,35 @@ export async function getWarehouses() {
     const response = await axios.get(`${API_BASE}/warehouses`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching warehouses:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function addWarehouse(warehouseData: any) {
   try {
     const response = await axios.post(`${API_BASE}/warehouses`, warehouseData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Warehouse added successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error adding warehouse:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function updateWarehouse(id: string, warehouseData: any) {
   try {
     const response = await axios.put(`${API_BASE}/warehouses/${id}`, warehouseData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Warehouse updated successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error updating warehouse:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
@@ -105,35 +138,74 @@ export async function getTransactions() {
     const response = await axios.get(`${API_BASE}/transactions`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
 export async function addTransaction(transactionData: any) {
   try {
     const response = await axios.post(`${API_BASE}/transactions`, transactionData);
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Transaction added successfully',
+    });
     return response.data;
   } catch (error) {
-    console.error('Error adding transaction:', error);
-    throw error;
+    return handleError(error);
   }
 }
 
-// Dashboard Operations
-export const getDashboardData = async (startDate: string, endDate: string) => {
+// --- Dashboard APIs ---
+export async function getDashboardData(startDate: string, endDate: string) {
   try {
     const response = await axios.get(`${API_BASE}/dashboard`, {
       params: { startDate, endDate }
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    throw error;
+    return handleError(error);
   }
-};
+}
 
-// Export functions
+// --- Utility Functions ---
+export async function getUniqueSKUs() {
+  try {
+    const skus = await getSKUs();
+    return [...new Set(skus.map((sku: any) => sku.sku))];
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function getUniqueItemNames() {
+  try {
+    const skus = await getSKUs();
+    return [...new Set(skus.map((sku: any) => sku.itemName))];
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function getUniqueWarehouses() {
+  try {
+    const warehouses = await getWarehouses();
+    return [...new Set(warehouses.map((warehouse: any) => warehouse.name))];
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function getManagerNames() {
+  try {
+    const warehouses = await getWarehouses();
+    return [...new Set(warehouses.map((warehouse: any) => warehouse.managerName))];
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+// --- Export Functions ---
 export const exportTable = (tableId: string, format: string, data: any[]) => {
   try {
     if (format === 'csv') {
